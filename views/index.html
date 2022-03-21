@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Chat With Me</title>
+    <link rel="stylesheet" href="styles/main.css">
+  </head>
+  <body>
+    <div class="chat-app">
+      <div class="title">
+        <img src="/images/logo.jpg"/>
+        <span>Chat With Me</span>
+      </div>
+      <div id="messages"></div>
+      <form id="form" action="">
+        <label for="input-image">
+            <img src="images/img-logo.png" class="img-logo" />
+        </label>
+        <input id="input-image" name="image-message" autocomplete="off" type="file" accept=".jpg, .jpeg, .png" />
+        <input id="input" autocomplete="off" />
+          <button>
+            <img src="images/img-send.png" class="img-send" />
+          </button>
+      </form>
+    </div>
+    
+  </body>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const userName = 'aaaa';
+
+    var socket = io();
+
+    var messages = document.querySelector('#messages');
+    var form = document.querySelector('#form');
+    var input = document.querySelector('#input');
+    var inputImage = document.querySelector('#input-image');
+
+    inputImage.addEventListener("change", function (e) {
+      const file = e.target.files[0];
+
+      const reader = new FileReader();
+      reader.onload = function() {
+        const base64 = reader.result.replace(/.*base64,/, '');
+        const src = `data:image/jpeg;base64,${base64}`;
+        createElementMessage('send', '', 'image-message' ,src);
+        socket.emit('message-image', src);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    form.addEventListener('submit' , (e) => {
+      e.preventDefault();
+      
+      if (input.value) {
+        socket.emit('send-message', input.value);
+        createElementMessage('send', input.value, 'text-message')
+        input.value = '';
+      }
+    });
+
+    socket.on('receive-message', (message) => {
+      createElementMessage('receive', message, 'text-message')
+    });
+
+    socket.on('receive-message-image', (src) => {
+      createElementMessage('receive', '', 'image-message', src)
+    });
+
+    socket.on('status-room', (mes) => {
+      const div = document.createElement('div');
+      const item = document.createElement('span');
+      div.append(item);
+      div.classList.add('noti-text');
+      item.innerText = mes;
+      messages.appendChild(div);
+    });
+
+    function createElementMessage(status, mes, type, src = "") {
+      const className = status === 'send' ? 'my-message' : 'me-message';
+      //create div parent
+      const item = document.createElement('div');
+      item.classList.add(className);
+
+      //create date
+      const itemTime = document.createElement('span');
+      const date = getDateMessage();
+      itemTime.innerText = date;
+      itemTime.classList.add('message-time');
+
+      //create message
+      let itemMessages = '';
+  
+      if (type == 'text-message') {
+        itemMessages = document.createElement('p');
+        itemMessages.innerText = mes;
+      } else if (type == 'image-message') {
+        itemMessages = document.createElement('img');
+        itemMessages.src = src;
+        itemMessages.alt = 'image'
+        itemMessages.classList.add('image-message');
+      }
+      
+
+      // apppend to parrent
+      if (status === 'send') {
+        item.appendChild(itemTime);
+        item.appendChild(itemMessages);
+      } else {
+        item.appendChild(itemMessages);
+        item.appendChild(itemTime);
+      }
+
+      //append to box
+      messages.appendChild(item);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    function getDateMessage() {
+      const date = new Date();
+      return  `${date.getHours()}:${date.getMinutes()}`
+    }
+
+  </script>
+
+</html>
