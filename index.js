@@ -5,6 +5,7 @@ const server = http.createServer(app);
 const { Server } = require('socket.io');
 const io = new Server(server);
 const path = require("path");
+const port = process.env.PORT || 3001;
 
 const controlCacheTime = 1000 * 60 * 60 * 24 * 365;
 app.use(express.static(path.join(__dirname, "/static"), {
@@ -69,6 +70,6 @@ const getRoomInfo = () => {
   return roomExist;
 }
 
-server.listen(3001, () => {
-  console.log('listen on *:3001');
+server.listen(port, () => {
+  console.log(`listen on *:${port}`);
 });
